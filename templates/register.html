@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daftar — RPG Turn-Based</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, #6fb8d9 0%, #a8d9e8 55%, #c9e8c0 100%);
+      font-family: 'Press Start 2P', monospace;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .auth-box {
+      width: 340px;
+      padding: 24px 22px;
+      /* background-image: url('/static/ui/character_panel.png'); */
+      background-size: cover;
+      background-color: rgba(15, 8, 20, 0.72);
+      background-blend-mode: multiply;
+      border: 3px solid #000;
+      box-shadow: 0 0 0 2px #6b4a2a;
+      color: #fff2d6;
+    }
+
+    h1 {
+      font-size: 0.85rem;
+      text-align: center;
+      color: #ffe89a;
+      text-shadow: 2px 2px 0 #000;
+      margin-bottom: 22px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.5rem;
+      color: #d8c9a8;
+      margin-bottom: 6px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 16px;
+      background: #1a1010;
+      border: 2px solid #000;
+      box-shadow: 0 0 0 1px #6b4a2a;
+      color: #fff2d6;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.55rem;
+    }
+
+    input:focus {
+      outline: none;
+      box-shadow: 0 0 0 1px #ffd24a;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: 3px solid #000;
+      background: #5a4414;
+      color: #ffe89a;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.6rem;
+      cursor: pointer;
+      box-shadow: 0 3px 0 #000, inset 0 0 0 2px #7a5a3a;
+      transition: transform 0.08s;
+    }
+
+    .btn:hover {
+      transform: translateY(1px);
+    }
+
+    .btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 0 0 #000;
+    }
+
+    .error {
+      color: #ff8a8a;
+      font-size: 0.5rem;
+      margin-bottom: 14px;
+      display: none;
+      line-height: 1.6;
+    }
+
+    .switch {
+      margin-top: 18px;
+      text-align: center;
+      font-size: 0.5rem;
+      color: #d8c9a8;
+    }
+
+    .switch a {
+      color: #ffe89a;
+      text-decoration: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="auth-box">
+    <h1>⚔ DAFTAR</h1>
+    <div class="error" id="error-msg"></div>
+    <form id="register-form">
+      <label>Username</label>
+      <input type="text" id="username" required autocomplete="username">
+      <label>Password</label>
+      <input type="password" id="password" required autocomplete="current-password">
+      <button type="submit" class="btn">Daftar</button>
+    </form>
+    <div class="switch">Sudah punya akun? <a href="/login">Masuk</a></div>
+  </div>
+
+  <script>
+    document.getElementById('register-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const errorBox = document.getElementById('error-msg');
+
+      try {
+        const res = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          errorBox.textContent = data.error || 'Daftar gagal';
+          errorBox.style.display = 'block';
+          return;
+        }
+        window.location.href = '/';
+      } catch (err) {
+        errorBox.textContent = 'Tidak bisa terhubung ke server';
+        errorBox.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+
+</html>
