@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RPG Turn-Based — OOP Python</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+  <div id="game-root">
+
+    <!-- ============ ARENA ============ -->
+    <div class="arena">
+      <div class="user-badge">
+        {{ username }}
+        <a href="/profile" style="color:#ffe89a;text-decoration:none;font-size:0.4rem;">Profil</a>
+        <a href="/leaderboard" style="color:#ffe89a;text-decoration:none;font-size:0.4rem;">Leaderboard</a>
+        <a href="/history" style="color:#ffe89a;text-decoration:none;font-size:0.4rem;">Riwayat</a>
+        <button onclick="doLogout()">Logout</button>
+      </div>
+      <div class="bg" id="bg"></div>
+
+      <div class="turn-glow" id="glow-hero"></div>
+      <div class="turn-glow" id="glow-mage"></div>
+      <div class="turn-glow" id="glow-monster"></div>
+
+      <div class="sprite-box" id="sprite-hero">
+        <div class="sprite-inner" id="inner-hero"></div>
+      </div>
+      <div class="sprite-box" id="sprite-mage">
+        <div class="sprite-inner" id="inner-mage"></div>
+      </div>
+      <div class="sprite-box" id="sprite-monster">
+        <div class="sprite-inner" id="inner-monster"></div>
+      </div>
+    </div>
+
+    <!-- ============ STATUS BAR ============ -->
+    <div class="status-bar">
+
+      <div class="panel panel-left">
+        <div class="unit-row">
+          <div class="unit-portrait">
+            <img src="/static/ui/Icon17_big.png" alt="Ziqi Portrait">
+          </div>
+          <div class="unit-info">
+            <div class="unit-name">Ziqi</div>
+            <div class="bar-track">
+              <div class="bar-fill hp-fill" id="bar-hero-hp" style="width:100%"></div>
+            </div>
+            <div class="bar-num" id="val-hero-hp">120/120 HP</div>
+            <div class="bar-track">
+              <div class="bar-fill mp-fill" id="bar-hero-mp" style="width:100%"></div>
+            </div>
+            <div class="bar-num" id="val-hero-mp">20/20 MP</div>
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <div class="unit-row">
+          <div class="unit-portrait">
+            <img src="/static/ui/Icon4_big.png" alt="Hazel Portrait">
+          </div>
+          <div class="unit-info">
+            <div class="unit-name">Hazel</div>
+            <div class="bar-track">
+              <div class="bar-fill hp-fill" id="bar-mage-hp" style="width:100%"></div>
+            </div>
+            <div class="bar-num" id="val-mage-hp">80/80 HP</div>
+            <div class="bar-track">
+              <div class="bar-fill mp-fill" id="bar-mage-mp" style="width:100%"></div>
+            </div>
+            <div class="bar-num" id="val-mage-mp">90/90 MP</div>
+          </div>
+        </div>
+
+        <div class="skill-buttons" id="skill-buttons">
+          <button class="btn btn-start" onclick="startBattle()" style="flex-basis:100%;">Mulai</button>
+        </div>
+      </div>
+
+      <div class="panel panel-center">
+        <div class="turn-badge" id="turn-label">Klik <span>MULAI</span> untuk memulai battle</div>
+        <div class="action-log" id="battle-log">
+          <div class="log-entry">Siap tempur!</div>
+        </div>
+      </div>
+
+      <div class="panel panel-right">
+        <div class="unit-row" style="margin-bottom:auto;">
+          <div class="monster-portrait">
+            <img src="/static/ui/Icon11_big.png" alt="Minotauruz Portrait">
+          </div>
+          <div class="unit-info">
+            <div class="unit-name">Minotauruz</div>
+            <div class="bar-track">
+              <div class="bar-fill hp-fill" id="bar-monster-hp" style="width:100%"></div>
+            </div>
+            <div class="bar-num" id="val-monster-hp">375/375 HP</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============ RESULT OVERLAY ============ -->
+  <div class="result-screen" id="result-screen">
+    <div class="result-box" id="result-box">
+      <h2 id="result-title">Hasil</h2>
+      <p id="result-desc"></p>
+      <button class="btn btn-start" onclick="resetResult()">Main Lagi</button>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+
+</html>
