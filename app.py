@@ -6,6 +6,8 @@ from characters import Hero, Mage, Monster
 from auth import auth_bp
 from db import init_db, run_query, run_many
 from config import SECRET_KEY
+from datetime import datetime
+from zoneinfo import ZoneInfo
 import random
 import functools
 
@@ -29,12 +31,74 @@ def login_required(view_func):
         return view_func(*args, **kwargs)
     return wrapper
 
-games_by_user = {}
+def serialize_character(c, extra=None):
+    """Ubah objek Character jadi dict biar bisa disimpan di session (cookie),
+    yang cuma bisa nyimpan tipe data JSON-serializable, bukan objek Python."""
+    data = {'hp': c.hp, 'alive': c.is_alive}
+    if hasattr(c, 'mp'):
+        data['mp'] = c.mp
+    if extra:
+        data.update(extra)
+    return data
 
 
-def build_state(next_turn: str, messages: list, battle_over=False, winner=None):
+def restore_hero(data):
+    """Bikin ulang objek Hero dari dict yang tersimpan di session, lalu
+    timpa stat-nya (bukan bikin Hero baru dengan HP/MP penuh)."""
+    h = Hero("Ziqi")
+    h._hp = data['hp']
+    h._mp = data['mp']
+    h._is_alive = data['alive']
+    h._is_blocking = data.get('is_blocking', False)
+    return h
+
+
+def restore_mage(data):
+    m = Mage("Hazel")
+    m._hp = data['hp']
+    m._mp = data['mp']
+    m._is_alive = data['alive']
+    return m
+
+
+def restore_monster(data):
+    mo = Monster("Minotauruz")
+    mo._hp = data['hp']
+    mo._is_alive = data['alive']
+    return mo
+
+
+def load_battle():
+    """Ambil objek hero/mage/monster dari session['battle']. Return None
+    kalau belum ada battle aktif."""
+    b = session.get('battle')
+    if not b:
+        return None
+    return {
+        'hero':        restore_hero(b['hero']),
+        'mage':        restore_mage(b['mage']),
+        'monster':     restore_monster(b['monster']),
+        'battle_over': b['battle_over'],
+        'log':         b['log'],
+        'turn_count':  b['turn_count'],
+    }
+
+
+def save_battle_to_session(g: dict):
+    """Simpan balik state battle (setelah dimutasi) ke session."""
+    session['battle'] = {
+        'hero':        serialize_character(g['hero'], {'is_blocking': g['hero']._is_blocking}),
+        'mage':        serialize_character(g['mage']),
+        'monster':     serialize_character(g['monster']),
+        'battle_over': g['battle_over'],
+        'log':         g['log'],
+        'turn_count':  g['turn_count'],
+    }
+    session.modified = True
+
+
+def build_state(g: dict, next_turn: str, messages: list, battle_over=False, winner=None):
     """Helper: kumpulkan semua state jadi 1 dict untuk dikirim ke browser."""
-    g  = games_by_user[session['user_id']]
     h  = g['hero']
     m  = g['mage']
     mo = g['monster']
@@ -71,10 +135,11 @@ def save_battle_result(user_id: int, g: dict, winner: str):
     aksi) supaya tidak lambat karena bolak-balik ke server jauh.
     """
     turns_taken = g['turn_count']
+    played_at   = datetime.now(ZoneInfo("Asia/Jakarta"))
 
     battle_id = run_query(
-        "INSERT INTO battles (user_id, winner, turns_taken) VALUES (%s, %s, %s)",
-        (user_id, winner, turns_taken)
+        "INSERT INTO battles (user_id, winner, turns_taken, played_at) VALUES (%s, %s, %s, %s)",
+        (user_id, winner, turns_taken, played_at)
     )
 
     log_rows = [(battle_id, i + 1, msg) for i, msg in enumerate(g['log'])]
@@ -121,15 +186,17 @@ def index():
 @app.route('/start', methods=['POST'])
 @login_required
 def start():
-    games_by_user[session['user_id']] = {
+    g = {
         'hero':        Hero("Ziqi"),
         'mage':        Mage("Hazel"),
         'monster':     Monster("Minotauruz"),
         'battle_over': False,
-        'log':         [],   
-        'turn_count':  0,    
+        'log':         [],
+        'turn_count':  0,
     }
+    save_battle_to_session(g)
     return jsonify(build_state(
+        g,
         next_turn='hero',
         messages=['⚔ Battle dimulai! Giliran Ziqi.']
     ))
@@ -141,7 +208,7 @@ def start():
 @app.route('/action', methods=['POST'])
 @login_required
 def action():
-    g = games_by_user.get(session['user_id'])
+    g = load_battle()
     if not g or g.get('battle_over'):
         return jsonify({'error': 'Battle belum dimulai'}), 400
 
@@ -174,7 +241,8 @@ def action():
         messages.append('🏆 Minotauruz dikalahkan! PARTY MENANG!')
         g['log'].extend(messages)
         save_battle_result(session['user_id'], g, winner='player')
-        return jsonify(build_state('none', messages, battle_over=True, winner='player'))
+        save_battle_to_session(g)
+        return jsonify(build_state(g, 'none', messages, battle_over=True, winner='player'))
 
     # === STEP 3: turn monster ===
     should_monster_attack = (character == 'mage') or (character == 'hero' and not m.is_alive) or (character == 'mage' and not h.is_alive)
@@ -191,7 +259,8 @@ def action():
             messages.append('💀 Party kalah! Minotauruz menang.')
             g['log'].extend(messages)
             save_battle_result(session['user_id'], g, winner='monster')
-            return jsonify(build_state('none', messages, battle_over=True, winner='monster'))
+            save_battle_to_session(g)
+            return jsonify(build_state(g, 'none', messages, battle_over=True, winner='monster'))
 
     g['log'].extend(messages)
 
@@ -201,7 +270,8 @@ def action():
     else:
         next_turn = 'hero' if h.is_alive else 'mage'
 
-    return jsonify(build_state(next_turn, messages))
+    save_battle_to_session(g)
+    return jsonify(build_state(g, next_turn, messages))
 
 
 # ----------------------------------------------------------------
