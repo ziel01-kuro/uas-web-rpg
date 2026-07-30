@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profil — RPG Turn-Based</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+      background: linear-gradient(180deg, #6fb8d9 0%, #a8d9e8 55%, #c9e8c0 100%);
+      font-family: 'Press Start 2P', monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 16px;
+    }
+
+    .nav {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .nav a,
+    .nav button {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.45rem;
+      padding: 8px 12px;
+      background: #3a2a1a;
+      color: #fff2d6;
+      border: 2px solid #000;
+      box-shadow: 0 2px 0 #000;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .nav a.active {
+      background: #5a4414;
+      color: #ffe89a;
+    }
+
+    .box {
+      width: 380px;
+      max-width: 100%;
+      padding: 24px 22px;
+      /* background-image: url('/static/ui/character_panel.png'); */
+      background-size: cover;
+      background-color: rgba(15, 8, 20, 0.72);
+      background-blend-mode: multiply;
+      border: 3px solid #000;
+      box-shadow: 0 0 0 2px #6b4a2a;
+      color: #fff2d6;
+    }
+
+    h1 {
+      font-size: 0.75rem;
+      text-align: center;
+      color: #ffe89a;
+      text-shadow: 2px 2px 0 #000;
+      margin-bottom: 20px;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px dashed #5a4a3a;
+      font-size: 0.5rem;
+    }
+
+    .stat-row:last-child {
+      border-bottom: none;
+    }
+
+    .stat-label {
+      color: #d8c9a8;
+    }
+
+    .stat-value {
+      color: #ffe89a;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="nav">
+    <a href="/">Battle</a>
+    <a href="/profile" class="active">Profil</a>
+    <a href="/leaderboard">Leaderboard</a>
+    <a href="/history">Riwayat</a>
+    <button onclick="doLogout()">Logout</button>
+  </div>
+
+  <div class="box">
+    <h1>👤 {{ username }}</h1>
+    <div class="stat-row"><span class="stat-label">Total Battle</span><span class="stat-value">{{ total }}</span></div>
+    <div class="stat-row"><span class="stat-label">Menang</span><span class="stat-value">{{ stats.total_wins }}</span>
+    </div>
+    <div class="stat-row"><span class="stat-label">Kalah</span><span class="stat-value">{{ stats.total_losses }}</span>
+    </div>
+    <div class="stat-row"><span class="stat-label">Win Rate</span><span class="stat-value">{{ win_rate }}%</span></div>
+    <div class="stat-row">
+      <span class="stat-label">Kemenangan Tercepat</span>
+      <span class="stat-value">{% if stats.fastest_win_turns %}{{ stats.fastest_win_turns }} aksi{% else %}—{% endif
+        %}</span>
+    </div>
+  </div>
+
+  <script>
+    async function doLogout() {
+      await fetch('/api/logout', { method: 'POST' });
+      window.location.href = '/login';
+    }
+  </script>
+</body>
+
+</html>
